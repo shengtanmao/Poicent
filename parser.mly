@@ -1,3 +1,6 @@
+%{
+open Ast
+%}
 
 %token SEMI LPAREN RPAREN LBRACE RBRACE COMMA PLUS MINUS TIMES DIVIDE ASSIGN
 %token NOT EQ NEQ LT LEQ GT GEQ AND OR
@@ -6,7 +9,7 @@
 %token <bool> BLIT
 %token <string> ID FLIT
 %token EOF
-%token ASTER AMPER
+%token AMPER INC DEC LB RB
 
 %start program
 %type <Ast.program> program
@@ -20,7 +23,8 @@
 %left LT GT LEQ GEQ
 %left PLUS MINUS
 %left TIMES DIVIDE
-%right NOT ASTER AMPER INC DEC
+%right NOT AMPER INC DEC
+%left LB
 
 %%
 
@@ -53,7 +57,7 @@ typ:
   | BOOL  { Bool  }
   | FLOAT { Float }
   | VOID  { Void  }
-  | typ ASTER {}
+  | typ TIMES {Pointer $1}
 
 vdecl_list:
     /* nothing */    { [] }
@@ -99,13 +103,14 @@ expr:
   | expr OR     expr { Binop($1, Or,    $3)   }
   | MINUS expr %prec NOT { Unop(Neg, $2)      }
   | NOT expr         { Unop(Not, $2)          }
-  | ASTER ID {}
-  | AMPER ID {}
-  | INC ID {}
-  | DEC ID {}
-  | ID INC {}
-  | ID DEC {}
-  | ID ASSIGN expr   { Assign($1, $3)         }
+  | TIMES expr %prec NOT { Unop(Deref,$2) }
+  | AMPER expr { Unop(Refer, $2)}
+  | INC expr {Unop(Inc, $2)}
+  | DEC expr {Unop(Dec, $2)}
+  | expr INC {Postuop($1, Pinc)}
+  | expr DEC {Postuop($1, Pdec)}
+  | expr LB expr RB {Subscript($1,$3)}
+  | expr ASSIGN expr   { Assign($1, $3)         }
   | ID LPAREN args_opt RPAREN { Call($1, $3)  }
   | LPAREN expr RPAREN { $2                   }
 
