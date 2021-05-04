@@ -1,8 +1,3 @@
-/* Ocamlyacc parser for MicroC */
-
-%{
-open Ast
-%}
 
 %token SEMI LPAREN RPAREN LBRACE RBRACE COMMA PLUS MINUS TIMES DIVIDE ASSIGN
 %token NOT EQ NEQ LT LEQ GT GEQ AND OR
@@ -11,6 +6,7 @@ open Ast
 %token <bool> BLIT
 %token <string> ID FLIT
 %token EOF
+%token ASTER AMPER
 
 %start program
 %type <Ast.program> program
@@ -24,7 +20,7 @@ open Ast
 %left LT GT LEQ GEQ
 %left PLUS MINUS
 %left TIMES DIVIDE
-%right NOT
+%right NOT ASTER AMPER INC DEC
 
 %%
 
@@ -57,6 +53,7 @@ typ:
   | BOOL  { Bool  }
   | FLOAT { Float }
   | VOID  { Void  }
+  | typ ASTER {}
 
 vdecl_list:
     /* nothing */    { [] }
@@ -102,6 +99,12 @@ expr:
   | expr OR     expr { Binop($1, Or,    $3)   }
   | MINUS expr %prec NOT { Unop(Neg, $2)      }
   | NOT expr         { Unop(Not, $2)          }
+  | ASTER ID {}
+  | AMPER ID {}
+  | INC ID {}
+  | DEC ID {}
+  | ID INC {}
+  | ID DEC {}
   | ID ASSIGN expr   { Assign($1, $3)         }
   | ID LPAREN args_opt RPAREN { Call($1, $3)  }
   | LPAREN expr RPAREN { $2                   }
@@ -113,3 +116,4 @@ args_opt:
 args_list:
     expr                    { [$1] }
   | args_list COMMA expr { $3 :: $1 }
+
