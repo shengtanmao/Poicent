@@ -3,9 +3,7 @@
 type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq |
           And | Or
 
-type puop = Pinc | Pdec
-
-type uop = Neg | Not | Refer | Deref | Inc | Dec
+type uop = Neg | Not | Refer | Deref
 
 type typ = Int | Bool | Float | Void
   | Pointer of typ
@@ -19,10 +17,9 @@ type expr =
   | Id of string
   | Binop of expr * op * expr
   | Unop of uop * expr
-  | Postuop of expr * puop
-  | Subscript of expr * expr
   | Assign of expr * expr
   | Call of string * expr list
+  | Subscript of expr * expr
   | Noexpr
 
 type stmt =
@@ -64,12 +61,6 @@ let string_of_uop = function
   | Not -> "!"
   | Refer -> "&"
   | Deref -> "*"
-  | Inc -> "++"
-  | Dec -> "--"
-
-let string_of_puop = function
-    Pinc -> "++"
-  | Pdec -> "--"
 
 let rec string_of_expr = function
     Literal(l) -> string_of_int l
@@ -80,11 +71,10 @@ let rec string_of_expr = function
   | Binop(e1, o, e2) ->
       string_of_expr e1 ^ " " ^ string_of_op o ^ " " ^ string_of_expr e2
   | Unop(o, e) -> string_of_uop o ^ string_of_expr e
-  | Postuop(e,o) -> string_of_expr e ^ string_of_puop o
-  | Subscript(e, s) -> string_of_expr e ^ "[" ^ string_of_expr s ^ "]"
   | Assign(v, e) -> string_of_expr v ^ " = " ^ string_of_expr e
   | Call(f, el) ->
       f ^ "(" ^ String.concat ", " (List.map string_of_expr el) ^ ")"
+  | Subscript(e, s) -> string_of_expr e ^ "[" ^ string_of_expr s ^ "]"
   | Noexpr -> ""
 
 let rec string_of_stmt = function

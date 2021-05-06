@@ -23,7 +23,7 @@ open Ast
 %left LT GT LEQ GEQ
 %left PLUS MINUS
 %left TIMES DIVIDE
-%right NOT AMPER INC DEC
+%right NOT AMPER
 %left LB
 
 %%
@@ -105,10 +105,6 @@ expr:
   | NOT expr         { Unop(Not, $2)          }
   | TIMES expr %prec NOT { Unop(Deref,$2) }
   | AMPER expr { Unop(Refer, $2)}
-  | INC expr {Unop(Inc, $2)}
-  | DEC expr {Unop(Dec, $2)}
-  | expr INC {Postuop($1, Pinc)}
-  | expr DEC {Postuop($1, Pdec)}
   | expr LB expr RB {Subscript($1,$3)}
   | expr ASSIGN expr   { Assign($1, $3)         }
   | ID LPAREN args_opt RPAREN { Call($1, $3)  }

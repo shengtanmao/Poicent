@@ -96,14 +96,15 @@ Its elements could be accessed using $\text{pointer}[\text{index offset}]$ or de
 The values of unintialized elements are arbitrary.
 \begin{Verbatim}
 	int *a;
-	int i, j;
-	a = malloc(2*4); // allocates 8 bytes for 2 4-byte integers
+	int i;
+	int j;
+	a = malloc(2*4); /* allocates 8 bytes for 2 4-byte integers */
 	a[0] = 1;
 	a[1] = 2;
 	i = a[1];
 	j = *a;
 	free(a);
-	return i + j; // returns 3
+	return i + j; /* returns 3 */
 \end{Verbatim}
 
 \section{Pointer Arithmetic}
@@ -123,6 +124,6 @@ Pointers can also be compared.
 	else
 		i = *a;
 	free(a);
-	return i; // returns 2;
+	return i; /* returns 2 */
 \end{Verbatim}
 \end{document}
