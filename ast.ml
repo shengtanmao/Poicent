@@ -3,7 +3,7 @@
 type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq |
           And | Or
 
-type uop = Neg | Not | Refer | Deref
+type uop = Neg | Not
 
 type typ = Int | Bool | Float | Void
   | Pointer of typ
@@ -20,6 +20,8 @@ type expr =
   | Assign of expr * expr
   | Call of string * expr list
   | Subscript of expr * expr
+  | Refer of string
+  | Deref of expr
   | Noexpr
 
 type stmt =
@@ -59,8 +61,6 @@ let string_of_op = function
 let string_of_uop = function
     Neg -> "-"
   | Not -> "!"
-  | Refer -> "&"
-  | Deref -> "*"
 
 let rec string_of_expr = function
     Literal(l) -> string_of_int l
@@ -75,6 +75,8 @@ let rec string_of_expr = function
   | Call(f, el) ->
       f ^ "(" ^ String.concat ", " (List.map string_of_expr el) ^ ")"
   | Subscript(e, s) -> string_of_expr e ^ "[" ^ string_of_expr s ^ "]"
+  | Refer(s) -> "&" ^ s
+  | Deref (e) -> "*" ^ string_of_expr e
   | Noexpr -> ""
 
 let rec string_of_stmt = function

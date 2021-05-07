@@ -90,6 +90,17 @@ let check (globals, functions) =
       with Not_found -> raise (Failure ("undeclared identifier " ^ s))
     in
 
+    (* check if type is a pointer *)
+    let is_pointer p = match p with
+        Pointer s -> true
+       | _ -> false
+    in
+
+    let deref p = match p with
+        Pointer s -> s
+      | _ -> raise(Failure ("cannot dereference expression"))
+    in
+
     (* Return a semantically-checked expression, i.e., with a type *)
     let rec expr = function
         Literal  l -> (Int, SLiteral l)
@@ -97,26 +108,21 @@ let check (globals, functions) =
       | BoolLit l  -> (Bool, SBoolLit l)
       | Noexpr     -> (Void, SNoexpr)
       | Id s       -> (type_of_identifier s, SId s)
-      (* can only assign Pointer type, Id expr, and Subscript expr *)
+      (* can only assign Id expr, Deref expr, and Subscript expr *)
       | Assign(e1, e2) as ex -> 
           let (t1, e1') = expr e1
-          and (t2, e2') = expr e2
-          and err = "illegal assignment " ^ string_of_typ t1 ^ " = " ^ 
-            string_of_typ t1 ^ " in " ^ string_of_expr ex in 
-          let vt = match t1 with
-            Pointer p -> t1
-            | _ -> let ve = match e1' with
-                    Id | Subscript -> e1'
-                    _ -> raise (Failure ("left expression is not assignable"))
-          in (check_assign t1 t2 err, SAssign(e1, (t2, e2')))
+          and (t2, e2') = expr e2 in
+          let err = "illegal assignment " ^ string_of_typ t1 ^ " = " ^ 
+            string_of_typ t1 ^ " in " ^ string_of_expr ex
+        and vt = match e1 with
+                Id _ | Subscript (_,_) | Deref _ -> t1
+                | _ -> raise (Failure ("left expression is not assignable"))
+          in (check_assign t1 t2 err, SAssign((vt, e1'), (t2, e2')))
       | Unop(op, e) as ex -> 
           let (t, e') = expr e in
           let ty = match op with
             Neg when t = Int || t = Float -> t
           | Not when t = Bool -> Bool
-          (* reference and dereference *)
-          | Refer -> Pointer t
-          | Deref when t = Pointer p -> p
           | _ -> raise (Failure ("illegal unary operator " ^ 
                                  string_of_uop op ^ string_of_typ t ^
                                  " in " ^ string_of_expr ex))
@@ -133,10 +139,10 @@ let check (globals, functions) =
           | Add | Sub | Mult | Div when same && t1 = Float -> Float
           | Equal | Neq            when same               -> Bool
           | Less | Leq | Greater | Geq
-                     when same && (t1 = Int || t1 = Float || t1 = Pointer p) -> Bool
+                     when same && (t1 = Int || t1 = Float || is_pointer t1) -> Bool
           | And | Or when same && t1 = Bool -> Bool
           (* pointer arithmetic *)
-          | Add | Sub when (t1 = Int && t2 = Pointer p) || (t1 = Pointer p && t2 = Int) -> Pointer p
+          | Add | Sub when (t1 = Int && is_pointer t2) || (is_pointer t1 && t2 = Int) -> if is_pointer t1 then t1 else t2
           | _ -> raise (
 	      Failure ("illegal binary operator " ^
                        string_of_typ t1 ^ " " ^ string_of_op op ^ " " ^
@@ -157,14 +163,19 @@ let check (globals, functions) =
           let args' = List.map2 check_call fd.formals args
           in (fd.typ, SCall(fname, args'))
           (* subscript main expr must be a pointer and the subscript must be integer *)
-      | Subscript(e, s) as subs ->
+      | Subscript(e, s) ->
          let (te, e') = expr e
          and (ts, s') = expr s in
          if ts != Int then raise (Failure ("subscript expression not integral"))
          else let ts = match te with
             Pointer p -> p
-            _ -> raise (Failure ("main expression not a pointer"))
-        in (ts, SSubscript(e, s))
+            | _ -> raise (Failure ("main expression not a pointer"))
+        in (ts, SSubscript((te, e'), (ts, s')))
+      | Refer s -> (Pointer (type_of_identifier s), SRefer s)
+      | Deref e -> 
+          let (t, e') = expr e in
+          if is_pointer t then (deref t, SDeref((t,e')))
+          else raise (Failure("cannot dereference expression"))
     in
 
     let check_bool_expr e = 
