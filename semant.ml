@@ -97,17 +97,24 @@ let check (globals, functions) =
       | BoolLit l  -> (Bool, SBoolLit l)
       | Noexpr     -> (Void, SNoexpr)
       | Id s       -> (type_of_identifier s, SId s)
-      | Assign(var, e) as ex -> 
-          let lt = type_of_identifier var
-          and (rt, e') = expr e in
-          let err = "illegal assignment " ^ string_of_typ lt ^ " = " ^ 
-            string_of_typ rt ^ " in " ^ string_of_expr ex
-          in (check_assign lt rt err, SAssign(var, (rt, e')))
+      (* can only assign Pointer type, Id expr, and Subscript expr *)
+      | Assign(e1, e2) as ex -> 
+          let (t1, e1') = expr e1
+          and (t2, e2') = expr e2
+          and err = "illegal assignment " ^ string_of_typ t1 ^ " = " ^ 
+            string_of_typ t1 ^ " in " ^ string_of_expr ex in 
+          let vt = match t1 with
+            Pointer p -> t1
+            | _ -> let ve = match e1' with
+                    Id | Subscript -> e1'
+                    _ -> raise (Failure ("left expression is not assignable"))
+          in (check_assign t1 t2 err, SAssign(e1, (t2, e2')))
       | Unop(op, e) as ex -> 
           let (t, e') = expr e in
           let ty = match op with
             Neg when t = Int || t = Float -> t
           | Not when t = Bool -> Bool
+          (* reference and dereference *)
           | Refer -> Pointer t
           | Deref when t = Pointer p -> p
           | _ -> raise (Failure ("illegal unary operator " ^ 
@@ -128,6 +135,7 @@ let check (globals, functions) =
           | Less | Leq | Greater | Geq
                      when same && (t1 = Int || t1 = Float || t1 = Pointer p) -> Bool
           | And | Or when same && t1 = Bool -> Bool
+          (* pointer arithmetic *)
           | Add | Sub when (t1 = Int && t2 = Pointer p) || (t1 = Pointer p && t2 = Int) -> Pointer p
           | _ -> raise (
 	      Failure ("illegal binary operator " ^
@@ -148,6 +156,15 @@ let check (globals, functions) =
           in 
           let args' = List.map2 check_call fd.formals args
           in (fd.typ, SCall(fname, args'))
+          (* subscript main expr must be a pointer and the subscript must be integer *)
+      | Subscript(e, s) as subs ->
+         let (te, e') = expr e
+         and (ts, s') = expr s in
+         if ts != Int then raise (Failure ("subscript expression not integral"))
+         else let ts = match te with
+            Pointer p -> p
+            _ -> raise (Failure ("main expression not a pointer"))
+        in (ts, SSubscript(e, s))
     in
 
     let check_bool_expr e = 
