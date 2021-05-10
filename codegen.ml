@@ -28,9 +28,10 @@ let translate (globals, functions) =
   and i8_t = L.i8_type context
   and i1_t = L.i1_type context
   and float_t = L.double_type context
-  and void_t = L.void_type context in
+  and void_t = L.void_type context
+  and vpoint_t = L.pointer_type (L.void_type context) in 
   (* Return the LLVM type for a Poicent type *)
-  let ltype_of_typ = function
+  let rec ltype_of_typ = function
     | A.Int -> i32_t
     | A.Bool -> i1_t
     | A.Float -> float_t
@@ -55,6 +56,15 @@ let translate (globals, functions) =
   in
   let printf_func : L.llvalue =
     L.declare_function "printf" printf_t the_module
+  in
+  (* need functions for malloc and free *)
+  let malloc_t : L.lltype = L.var_arg_function_type vpoint_t [|i32_t|]
+  in
+  let malloc_func : L.llvalue = L.declare_function "malloc" malloc_t the_module
+  in
+  let free_t : L.lltype = L.var_arg_function_type void_t [|vpoint_t|]
+  in
+  let free_func : L.llvalue = L.declare_function "free" free_t the_module
   in
   let printbig_t : L.lltype = L.function_type i32_t [|i32_t|] in
   let printbig_func : L.llvalue =
@@ -114,10 +124,14 @@ let translate (globals, functions) =
       | SFliteral l -> L.const_float_of_string float_t l
       | SNoexpr -> L.const_int i32_t 0
       | SId s -> L.build_load (lookup s) s builder
-      | SAssign (s, e) ->
-          let e' = expr builder e in
-          ignore (L.build_store e' (lookup s) builder) ;
-          e'
+      (* need to add support for Id, Deref, and Subscript expr *)
+      | SAssign (e1, e2) ->
+          let e2' = expr builder e2 in
+          match e1 with
+          | SId s -> ignore (L.build_store e2' (lookup s) builder) ; e2'
+          | SSubscript (s,i) -> let e1' = expr builder e1 in
+                ignore (L.build_store e2' e1' builder); e2'
+          | _ -> raise (Failure "you failed")
       | SBinop (((A.Float, _) as e1), op, e2) ->
           let e1' = expr builder e1 and e2' = expr builder e2 in
           ( match op with
@@ -137,6 +151,7 @@ let translate (globals, functions) =
                    "internal error: semant should have rejected and/or on float")
           )
             e1' e2' "tmp" builder
+      (* need to add support for pointer comparison and pointer +/- int*)
       | SBinop (e1, op, e2) ->
           let e1' = expr builder e1 and e2' = expr builder e2 in
           ( match op with
@@ -160,6 +175,14 @@ let translate (globals, functions) =
           | A.Neg -> L.build_neg
           | A.Not -> L.build_not )
             e' "tmp" builder
+      (* need to add support for subscript, reference, dereference *)
+      | SSubscript (s, i) ->
+          (* load s into new variable, load s[i] into new variable, return s[i] *)
+          let s' = expr builder s
+          and i' = expr builder i in
+          let s_var = L.build_load s' "tmp" builder in
+          build_in_bounds_gep s_var i' "tmp" builder
+      (* need to add malloc and free *)
       | SCall ("print", [e]) | SCall ("printb", [e]) ->
           L.build_call printf_func
             [|int_format_str; expr builder e|]

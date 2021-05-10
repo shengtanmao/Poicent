@@ -40,8 +40,6 @@ rule token = parse
 | "true"   { BLIT(true)  }
 | "false"  { BLIT(false) }
 | "&" {AMPER}
-| "++" {INC}
-| "--" {DEC}
 | '[' {LB}
 | ']' {RB}
 | digits as lxm { LITERAL(int_of_string lxm) }
