@@ -124,14 +124,23 @@ let translate (globals, functions) =
       | SFliteral l -> L.const_float_of_string float_t l
       | SNoexpr -> L.const_int i32_t 0
       | SId s -> L.build_load (lookup s) s builder
+
+
+
+
       (* need to add support for Id, Deref, and Subscript expr *)
       | SAssign (e1, e2) ->
-          let e2' = expr builder e2 in
-          match e1 with
+          let t1, s1 = e1
+          and e2' = expr builder e2 in
+          match s1 with
           | SId s -> ignore (L.build_store e2' (lookup s) builder) ; e2'
           | SSubscript (s,i) -> let e1' = expr builder e1 in
                 ignore (L.build_store e2' e1' builder); e2'
           | _ -> raise (Failure "you failed")
+
+
+
+
       | SBinop (((A.Float, _) as e1), op, e2) ->
           let e1' = expr builder e1 and e2' = expr builder e2 in
           ( match op with
@@ -175,14 +184,22 @@ let translate (globals, functions) =
           | A.Neg -> L.build_neg
           | A.Not -> L.build_not )
             e' "tmp" builder
+
+
+
+
       (* need to add support for subscript, reference, dereference *)
       | SSubscript (s, i) ->
           (* load s into new variable, load s[i] into new variable, return s[i] *)
           let s' = expr builder s
           and i' = expr builder i in
           let s_var = L.build_load s' "tmp" builder in
-          build_in_bounds_gep s_var i' "tmp" builder
+          L.build_in_bounds_gep s_var (Array.of_list [i']) "tmp" builder
       (* need to add malloc and free *)
+
+
+
+
       | SCall ("print", [e]) | SCall ("printb", [e]) ->
           L.build_call printf_func
             [|int_format_str; expr builder e|]
