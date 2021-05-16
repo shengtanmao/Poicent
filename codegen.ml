@@ -123,20 +123,22 @@ let translate (globals, functions) =
       | SBoolLit b -> L.const_int i1_t (if b then 1 else 0)
       | SFliteral l -> L.const_float_of_string float_t l
       | SNoexpr -> L.const_int i32_t 0
+
+
+
+
+      (* need to allocate sizeof(type) to hold referenced var when declaring poitners *)
       | SId s -> L.build_load (lookup s) s builder
-
-
-
-
       (* need to add support for Id, Deref, and Subscript expr *)
       | SAssign (e1, e2) ->
           let t1, s1 = e1
           and e2' = expr builder e2 in
-          match s1 with
-          | SId s -> ignore (L.build_store e2' (lookup s) builder) ; e2'
-          | SSubscript (s,i) -> let e1' = expr builder e1 in
-                ignore (L.build_store e2' e1' builder); e2'
+          let e = match s1 with
+          | SId s -> L.build_store e2' (lookup s) builder
+          | SSubscript (_,_) -> let e1' = expr builder e1 in
+                                L.build_store e2' e1' builder
           | _ -> raise (Failure "you failed")
+          in e
 
 
 
@@ -189,12 +191,12 @@ let translate (globals, functions) =
 
 
       (* need to add support for subscript, reference, dereference *)
+      (* Subscript *)
       | SSubscript (s, i) ->
           (* load s into new variable, load s[i] into new variable, return s[i] *)
           let s' = expr builder s
           and i' = expr builder i in
-          let s_var = L.build_load s' "tmp" builder in
-          L.build_in_bounds_gep s_var (Array.of_list [i']) "tmp" builder
+          L.build_in_bounds_gep s' (Array.of_list [i']) "tmp" builder
       (* need to add malloc and free *)
 
 
