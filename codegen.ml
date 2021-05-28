@@ -135,7 +135,7 @@ let translate (globals, functions) =
           and e2' = expr builder e2 in
           let e = match s1 with
           | SId s -> L.build_store e2' (lookup s) builder
-          | SSubscript (_,_) -> let e1' = expr builder e1 in
+          | SSubscript (_,_) | SDeref _ -> let e1' = expr builder e1 in
                                 L.build_store e2' e1' builder
           | _ -> raise (Failure "you failed")
           in e
@@ -197,6 +197,10 @@ let translate (globals, functions) =
           let s' = expr builder s
           and i' = expr builder i in
           L.build_in_bounds_gep s' (Array.of_list [i']) "tmp" builder
+      (* Dereference *)
+      | SDeref (s) -> expr builder s
+          
+ 
       (* need to add malloc and free *)
 
 
