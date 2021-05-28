@@ -28,8 +28,8 @@ let translate (globals, functions) =
   and i8_t = L.i8_type context
   and i1_t = L.i1_type context
   and float_t = L.double_type context
-  and void_t = L.void_type context
-  and vpoint_t = L.pointer_type (L.void_type context) in 
+  and void_t = L.void_type context in
+  let vpoint_t = L.pointer_type (i8_t) in 
   (* Return the LLVM type for a Poicent type *)
   let rec ltype_of_typ = function
     | A.Int -> i32_t
