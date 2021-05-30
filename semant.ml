@@ -37,7 +37,7 @@ let check (globals, functions) =
         map
     in
     List.fold_left add_bind StringMap.empty
-      [("print", Int); ("printb", Bool); ("printf", Float); ("printbig", Int)]
+      [("malloc", Int); ("print", Int); ("printb", Bool); ("printf", Float); ("printbig", Int)]
   in
   (* Add function name to symbol table *)
   let add_func map fd =

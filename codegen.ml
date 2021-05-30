@@ -22,7 +22,7 @@ let translate (globals, functions) =
   let context = L.global_context () in
   (* Create the LLVM compilation module into which
      we will generate code *)
-  let the_module = L.create_module context "MicroC" in
+  let the_module = L.create_module context "Poicent" in
   (* Get types from the context *)
   let i32_t = L.i32_type context
   and i8_t = L.i8_type context
@@ -132,6 +132,7 @@ let translate (globals, functions) =
       (* need to add support for Id, Deref, and Subscript expr *)
       | SAssign (e1, e2) ->
           let t1, s1 = e1
+          and t2, s2 = e2
           and e2' = expr builder e2 in
           let e = match s1 with
           | SId s -> L.build_store e2' (lookup s) builder
@@ -201,9 +202,16 @@ let translate (globals, functions) =
           L.build_in_bounds_gep s' (Array.of_list [i']) "tmp" builder
       (* Dereference *)
       | SDeref s -> expr builder s
+      (* Reference *)
       | SRefer s -> lookup s
 
       (* need to add malloc and free *)
+      | SCall ("malloc", [e]) -> 
+          L.build_call malloc_func
+            [|expr builder e|]
+            "malloc" builder
+              (* L.build_array_malloc vpoint_t  (expr builder e) "malloc" builder *)
+
 
 
 
