@@ -136,12 +136,13 @@ let translate (globals, functions) =
           and e2'' = expr builder e2 in
           let e2' = match s2 with
           | SCall ("malloc", [e]) -> L.build_bitcast e2'' (ltype_of_typ t1) "vpcast" builder
-          | SDeref s -> L.build_load (expr builder s) "deref" builder
           | _ -> e2''
           in
           let e = match s1 with
           | SId s -> L.build_store e2' (lookup s) builder
-          | SSubscript (_,_) | SDeref _ -> let e1' = expr builder e1 in
+          | SSubscript (_,_) -> let e1' = expr builder e1 in
+                                           L.build_store e2' e1' builder
+          | SDeref s -> let e1' = expr builder s in
                                            L.build_store e2' e1' builder
           | _ -> raise (Failure "you failed")
           in e
@@ -206,7 +207,7 @@ let translate (globals, functions) =
           and i' = expr builder i in
           L.build_in_bounds_gep s' (Array.of_list [i']) "tmp" builder
       (* Dereference *)
-      | SDeref s -> expr builder s
+      | SDeref s -> L.build_load (expr builder s) "deref" builder
       (* Reference *)
       | SRefer s -> lookup s
 
