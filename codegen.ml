@@ -29,7 +29,7 @@ let translate (globals, functions) =
   and i1_t = L.i1_type context
   and float_t = L.double_type context
   and void_t = L.void_type context in
-  let vpoint_t = L.pointer_type (i8_t) in 
+  let vpoint_t = L.pointer_type i8_t in
   (* Return the LLVM type for a Poicent type *)
   let rec ltype_of_typ = function
     | A.Int -> i32_t
@@ -58,19 +58,17 @@ let translate (globals, functions) =
     L.declare_function "printf" printf_t the_module
   in
   (* need functions for malloc and free *)
-  let malloc_t : L.lltype = L.function_type vpoint_t [|i32_t|]
+  let malloc_t : L.lltype = L.function_type vpoint_t [|i32_t|] in
+  let malloc_func : L.llvalue =
+    L.declare_function "malloc" malloc_t the_module
   in
-  let malloc_func : L.llvalue = L.declare_function "malloc" malloc_t the_module
-  in
-  let free_t : L.lltype = L.var_arg_function_type void_t [|vpoint_t|]
-  in
-  let free_func : L.llvalue = L.declare_function "free" free_t the_module
-  in
+  let free_t : L.lltype = L.var_arg_function_type void_t [|vpoint_t|] in
+  let free_func : L.llvalue = L.declare_function "free" free_t the_module in
   let printbig_t : L.lltype = L.function_type i32_t [|i32_t|] in
   let printbig_func : L.llvalue =
     L.declare_function "printbig" printbig_t the_module
   in
-  (* Define each function (arguments and return type) so we can 
+  (* Define each function (arguments and return type) so we can
      call it even before we've created its body *)
   let function_decls : (L.llvalue * sfunc_decl) StringMap.t =
     let function_decl m fdecl =
@@ -123,35 +121,32 @@ let translate (globals, functions) =
       | SBoolLit b -> L.const_int i1_t (if b then 1 else 0)
       | SFliteral l -> L.const_float_of_string float_t l
       | SNoexpr -> L.const_int i32_t 0
-
-
-
-
       (* need to allocate sizeof(type) to hold referenced var when declaring poitners *)
       | SId s -> L.build_load (lookup s) s builder
       (* need to add support for Id, Deref, and Subscript expr *)
       | SAssign (e1, e2) ->
-          let t1, s1 = e1
-          and t2, s2 = e2
-          and e2'' = expr builder e2 in
-          let e2' = match s2 with
-          | SCall ("malloc", [e]) -> L.build_bitcast e2'' (ltype_of_typ t1) "vpcast" builder
-          | _ -> e2''
+          let t1, s1 = e1 and t2, s2 = e2 and e2'' = expr builder e2 in
+          let e2' =
+            match s2 with
+            | SCall ("malloc", [e]) ->
+                L.build_bitcast e2'' (ltype_of_typ t1) "vpcast" builder
+            | _ -> e2''
           in
-          let e = match s1 with
-          | SId s -> L.build_store e2' (lookup s) builder
-          | SSubscript (_,_) -> let e1' = expr builder e1 in
-                                           L.build_store e2' e1' builder
-          | SDeref s -> let e1' = expr builder s in
-                                           L.build_store e2' e1' builder
-          | _ -> raise (Failure "you failed")
-          in e
-
-
-
-
-
-
+          let e =
+            match s1 with
+            | SId s -> L.build_store e2' (lookup s) builder
+            | SSubscript (s, i) ->
+                let e1' =
+                  let s' = expr builder s and i' = expr builder i in
+                  L.build_in_bounds_gep s' (Array.of_list [i']) "tmp" builder
+                in
+                L.build_store e2' e1' builder
+            | SDeref s ->
+                let e1' = expr builder s in
+                L.build_store e2' e1' builder
+            | _ -> raise (Failure "you failed")
+          in
+          e
       | SBinop (((A.Float, _) as e1), op, e2) ->
           let e1' = expr builder e1 and e2' = expr builder e2 in
           ( match op with
@@ -195,33 +190,22 @@ let translate (globals, functions) =
           | A.Neg -> L.build_neg
           | A.Not -> L.build_not )
             e' "tmp" builder
-
-
-
-
       (* need to add support for subscript, reference, dereference *)
       (* Subscript *)
       | SSubscript (s, i) ->
-          (* load s into new variable, load s[i] into new variable, return s[i] *)
-          let s' = expr builder s
-          and i' = expr builder i in
-          L.build_in_bounds_gep s' (Array.of_list [i']) "tmp" builder
+          let e =
+            let s' = expr builder s and i' = expr builder i in
+            L.build_in_bounds_gep s' (Array.of_list [i']) "tmp" builder
+          in
+          L.build_load e "deref" builder
       (* Dereference *)
       | SDeref s -> L.build_load (expr builder s) "deref" builder
       (* Reference *)
       | SRefer s -> lookup s
-
       (* need to add malloc and free *)
-      | SCall ("malloc", [e]) -> 
-          (*L.build_call malloc_func
-            [|expr builder e|]
-            "malloc" builder*)
-              L.build_array_malloc vpoint_t  (expr builder e) "malloc" builder
-
-
-
-
-
+      | SCall ("malloc", [e]) ->
+          L.build_call malloc_func [|expr builder e|] "malloc" builder
+          (* L.build_array_malloc vpoint_t  (expr builder e) "malloc" builder *)
       | SCall ("print", [e]) | SCall ("printb", [e]) ->
           L.build_call printf_func
             [|int_format_str; expr builder e|]
@@ -240,7 +224,7 @@ let translate (globals, functions) =
           in
           L.build_call fdef (Array.of_list llargs) result builder
     in
-    (* LLVM insists each basic block end with exactly one "terminator" 
+    (* LLVM insists each basic block end with exactly one "terminator"
        instruction that transfers control.  This function runs "instr builder"
        if the current block does not already have a terminator.  Used,
        e.g., to handle the "fall off the end of the function" case. *)
