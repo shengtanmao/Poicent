@@ -58,7 +58,7 @@ let translate (globals, functions) =
     L.declare_function "printf" printf_t the_module
   in
   (* need functions for malloc and free *)
-  let malloc_t : L.lltype = L.var_arg_function_type vpoint_t [|i32_t|]
+  let malloc_t : L.lltype = L.function_type vpoint_t [|i32_t|]
   in
   let malloc_func : L.llvalue = L.declare_function "malloc" malloc_t the_module
   in
@@ -133,7 +133,12 @@ let translate (globals, functions) =
       | SAssign (e1, e2) ->
           let t1, s1 = e1
           and t2, s2 = e2
-          and e2' = expr builder e2 in
+          and e2'' = expr builder e2 in
+          let e2' = match s2 with
+          | SCall ("malloc", [e]) -> L.build_bitcast e2'' (ltype_of_typ t1) "vpcast" builder
+          | SDeref s -> L.build_load (expr builder s) "deref" builder
+          | _ -> e2''
+          in
           let e = match s1 with
           | SId s -> L.build_store e2' (lookup s) builder
           | SSubscript (_,_) | SDeref _ -> let e1' = expr builder e1 in
@@ -207,10 +212,10 @@ let translate (globals, functions) =
 
       (* need to add malloc and free *)
       | SCall ("malloc", [e]) -> 
-          L.build_call malloc_func
+          (*L.build_call malloc_func
             [|expr builder e|]
-            "malloc" builder
-              (* L.build_array_malloc vpoint_t  (expr builder e) "malloc" builder *)
+            "malloc" builder*)
+              L.build_array_malloc vpoint_t  (expr builder e) "malloc" builder
 
 
 

@@ -31,13 +31,13 @@ let check (globals, functions) =
   
   (* Collect function declarations for built-in functions: no bodies *)
   let built_in_decls =
-    let add_bind map (name, ty) =
+    let add_bind map (typ, name, ty) =
       StringMap.add name
-        {typ= Void; fname= name; formals= [(ty, "x")]; locals= []; body= []}
+        {typ= typ; fname= name; formals= [(ty, "x")]; locals= []; body= []}
         map
     in
     List.fold_left add_bind StringMap.empty
-      [("malloc", Int); ("print", Int); ("printb", Bool); ("printf", Float); ("printbig", Int)]
+      [(Pointer Void, "malloc", Int); (Void, "print", Int); (Void, "printb", Bool); (Void, "printf", Float); (Void, "printbig", Int)]
   in
   (* Add function name to symbol table *)
   let add_func map fd =
@@ -67,7 +67,10 @@ let check (globals, functions) =
     (* Raise an exception if the given rvalue type cannot be assigned to
        the given lvalue type *)
     let check_assign lvaluet rvaluet err =
-      if lvaluet = rvaluet then lvaluet else raise (Failure err)
+        let typ = match lvaluet with
+        | Pointer _ -> if rvaluet = (Pointer Void) then lvaluet else raise (Failure err)
+        | _ -> if lvaluet = rvaluet then lvaluet else raise (Failure err)
+        in typ
     in
     (* Build local symbol table of variables for this function *)
     let symbols =
