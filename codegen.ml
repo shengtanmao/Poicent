@@ -62,7 +62,7 @@ let translate (globals, functions) =
   let malloc_func : L.llvalue =
     L.declare_function "malloc" malloc_t the_module
   in
-  let free_t : L.lltype = L.var_arg_function_type void_t [|vpoint_t|] in
+  let free_t : L.lltype = L.function_type i32_t [|vpoint_t|] in
   let free_func : L.llvalue = L.declare_function "free" free_t the_module in
   let printbig_t : L.lltype = L.function_type i32_t [|i32_t|] in
   let printbig_func : L.llvalue =
@@ -113,6 +113,12 @@ let translate (globals, functions) =
     let lookup n =
       try StringMap.find n local_vars with Not_found ->
         StringMap.find n global_vars
+    in
+    let load_lkup n =
+      L.build_load (lookup n) "load" builder
+    in
+    let vptr_cast e t =
+        L.build_bitcast e t "vpcast" builder 
     in
     (* Construct code for an expression; return its value *)
     let rec expr builder ((_, e) : sexpr) =
@@ -206,6 +212,11 @@ let translate (globals, functions) =
       | SCall ("malloc", [e]) ->
           L.build_call malloc_func [|expr builder e|] "malloc" builder
           (* L.build_array_malloc vpoint_t  (expr builder e) "malloc" builder *)
+      | SCall ("free", [e]) ->
+          let t, s = e in
+          match s with
+          | SId n -> L.build_call free_func [|vptr_cast (load_lkup n) vpoint_t|] "free" builder
+          | _ -> raise (Failure "failed to free")
       | SCall ("print", [e]) | SCall ("printb", [e]) ->
           L.build_call printf_func
             [|int_format_str; expr builder e|]

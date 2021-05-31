@@ -37,7 +37,7 @@ let check (globals, functions) =
         map
     in
     List.fold_left add_bind StringMap.empty
-      [(Pointer Void, "malloc", Int); (Void, "print", Int); (Void, "printb", Bool); (Void, "printf", Float); (Void, "printbig", Int)]
+      [(Void, "free", Pointer Void); (Pointer Void, "malloc", Int); (Void, "print", Int); (Void, "printb", Bool); (Void, "printf", Float); (Void, "printbig", Int)]
   in
   (* Add function name to symbol table *)
   let add_func map fd =
@@ -60,6 +60,8 @@ let check (globals, functions) =
   in
   let _ = find_func "main" in
   (* Ensure "main" is defined *)
+    (* check if type is a pointer *)
+    let is_pointer p = match p with Pointer s -> true | _ -> false in
   let check_function func =
     (* Make sure no formals or locals are void or duplicates *)
     check_binds "formal" func.formals ;
@@ -68,7 +70,8 @@ let check (globals, functions) =
        the given lvalue type *)
     let check_assign lvaluet rvaluet err =
         let typ = match lvaluet with
-        | Pointer _ -> if rvaluet = (Pointer Void) then lvaluet else raise (Failure err)
+        | Pointer Void -> if (is_pointer rvaluet) then rvaluet else raise (Failure "okay wat")
+        | Pointer _ -> if rvaluet = (Pointer Void) then lvaluet else raise (Failure "wat")
         | _ -> if lvaluet = rvaluet then lvaluet else raise (Failure err)
         in typ
     in
@@ -84,8 +87,6 @@ let check (globals, functions) =
       try StringMap.find s symbols with Not_found ->
         raise (Failure ("undeclared identifier " ^ s))
     in
-    (* check if type is a pointer *)
-    let is_pointer p = match p with Pointer s -> true | _ -> false in
     let deref p =
       match p with
       | Pointer s -> s
