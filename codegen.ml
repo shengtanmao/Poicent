@@ -201,11 +201,10 @@ let translate (globals, functions) =
       | SBinop(s, op, ((A.Int, _) as i)) ->
          let e = 
          let s' = expr builder s in
-         ( match op with
+          match op with
          | A.Add -> L.build_in_bounds_gep s' (Array.of_list [expr builder i]) "gep" builder
          | A.Sub -> L.build_in_bounds_gep s' (Array.of_list [expr builder (A.Int, SUnop (A.Neg, i))]) "gep" builder
          | _ -> raise (Failure "you failed")
-         )
          in
          L.build_load e "tmp" builder
       (* need to add support for subscript, reference, dereference *)
@@ -224,11 +223,14 @@ let translate (globals, functions) =
       | SCall ("malloc", [e]) ->
           L.build_call malloc_func [|expr builder e|] "malloc" builder
           (* L.build_array_malloc vpoint_t  (expr builder e) "malloc" builder *)
-      | SCall ("free", [e]) ->
+        | SCall ("free", [e]) ->
+          let e' =
           let t, s = e in
           match s with
           | SId n -> L.build_call free_func [|vptr_cast (load_lkup n) vpoint_t|] "free" builder
           | _ -> raise (Failure "failed to free")
+          in
+         L.build_load e' "tmp" builder
       | SCall ("print", [e]) | SCall ("printb", [e]) ->
           L.build_call printf_func
             [|int_format_str; expr builder e|]
