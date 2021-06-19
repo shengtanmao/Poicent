@@ -71,7 +71,7 @@ let check (globals, functions) =
     let check_assign lvaluet rvaluet err =
         let typ = match lvaluet with
         | Pointer Void -> if (is_pointer rvaluet) then rvaluet else raise (Failure "okay wat")
-        | Pointer _ -> if rvaluet = (Pointer Void) then lvaluet else raise (Failure "wat")
+        | Pointer p -> if rvaluet = (Pointer Void) || rvaluet = lvaluet then lvaluet else raise (Failure "wat")
         | _ -> if lvaluet = rvaluet then lvaluet else raise (Failure err)
         in typ
     in
@@ -141,9 +141,7 @@ let check (globals, functions) =
             | (And | Or) when same && t1 = Bool -> Bool
             (* pointer arithmetic *)
             | (Add | Sub)
-              when (t1 = Int && is_pointer t2) || (is_pointer t1 && t2 = Int)
-              ->
-                if is_pointer t1 then t1 else t2
+              when (is_pointer t1 && t2 = Int) -> t1
             | _ ->
                 raise
                   (Failure

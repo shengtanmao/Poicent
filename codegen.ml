@@ -120,6 +120,8 @@ let translate (globals, functions) =
     let vptr_cast e t =
         L.build_bitcast e t "vpcast" builder 
     in
+    let is_pointer p = match p with A.Pointer s -> true | _ -> false
+    in
     (* Construct code for an expression; return its value *)
     let rec expr builder ((_, e) : sexpr) =
       match e with
@@ -172,8 +174,7 @@ let translate (globals, functions) =
                    "internal error: semant should have rejected and/or on float")
           )
             e1' e2' "tmp" builder
-      (* need to add support for pointer comparison and pointer +/- int*)
-      | SBinop (e1, op, e2) ->
+      | SBinop ((A.Int, _) as e1, op, e2) ->
           let e1' = expr builder e1 and e2' = expr builder e2 in
           ( match op with
           | A.Add -> L.build_add
@@ -196,12 +197,23 @@ let translate (globals, functions) =
           | A.Neg -> L.build_neg
           | A.Not -> L.build_not )
             e' "tmp" builder
+      (* need to add support for poitner addition & subtraction *)
+      | SBinop(s, op, ((A.Int, _) as i)) ->
+         let e = 
+         let s' = expr builder s in
+         ( match op with
+         | A.Add -> L.build_in_bounds_gep s' (Array.of_list [expr builder i]) "gep" builder
+         | A.Sub -> L.build_in_bounds_gep s' (Array.of_list [expr builder (A.Int, SUnop (A.Neg, i))]) "gep" builder
+         | _ -> raise (Failure "you failed")
+         )
+         in
+         L.build_load e "tmp" builder
       (* need to add support for subscript, reference, dereference *)
       (* Subscript *)
       | SSubscript (s, i) ->
           let e =
             let s' = expr builder s and i' = expr builder i in
-            L.build_in_bounds_gep s' (Array.of_list [i']) "tmp" builder
+            L.build_in_bounds_gep s' (Array.of_list [i']) "gep" builder
           in
           L.build_load e "deref" builder
       (* Dereference *)
