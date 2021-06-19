@@ -199,14 +199,13 @@ let translate (globals, functions) =
             e' "tmp" builder
       (* need to add support for poitner addition & subtraction *)
       | SBinop(s, op, ((A.Int, _) as i)) ->
-         let e = 
          let s' = expr builder s in
-          match op with
-         | A.Add -> L.build_in_bounds_gep s' (Array.of_list [expr builder i]) "gep" builder
-         | A.Sub -> L.build_in_bounds_gep s' (Array.of_list [expr builder (A.Int, SUnop (A.Neg, i))]) "gep" builder
+         let i' = match op with
+         | A.Add -> expr builder i
+         | A.Sub -> expr builder (A.Int, SUnop (A.Neg, i))
          | _ -> raise (Failure "you failed")
          in
-         L.build_load e "tmp" builder
+         L.build_gep s' (Array.of_list[i']) "tmp" builder
       (* need to add support for subscript, reference, dereference *)
       (* Subscript *)
       | SSubscript (s, i) ->
