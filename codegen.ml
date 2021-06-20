@@ -234,13 +234,12 @@ let translate (globals, functions) =
           L.build_call malloc_func [|expr builder e|] "malloc" builder
           (* L.build_array_malloc vpoint_t  (expr builder e) "malloc" builder *)
         | SCall ("free", [e]) ->
-          let e' =
           let t, s = e in
-          match s with
-          | SId n -> L.build_call free_func [|vptr_cast (load_lkup n) vpoint_t|] "free" builder
+          let n = match s with
+          | SId name -> name
           | _ -> raise (Failure "failed to free")
           in
-         L.build_load e' "tmp" builder
+        L.build_call free_func [|vptr_cast (load_lkup n) vpoint_t|] "free" builder
       | SCall ("print", [e]) | SCall ("printb", [e]) ->
           L.build_call printf_func
             [|int_format_str; expr builder e|]
