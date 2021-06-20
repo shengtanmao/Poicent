@@ -197,7 +197,7 @@ let translate (globals, functions) =
           | A.Neg -> L.build_neg
           | A.Not -> L.build_not )
             e' "tmp" builder
-      (* need to add support for poitner addition & subtraction *)
+      (* pointer addition & subtraction *)
       | SBinop(s, op, ((A.Int, _) as i)) ->
          let s' = expr builder s in
          let i' = match op with
@@ -205,8 +205,19 @@ let translate (globals, functions) =
          | A.Sub -> expr builder (A.Int, SUnop (A.Neg, i))
          | _ -> raise (Failure "you failed")
          in
-         L.build_gep s' (Array.of_list[i']) "tmp" builder
-      (* need to add support for subscript, reference, dereference *)
+         L.build_in_bounds_gep s' (Array.of_list[i']) "tmp" builder
+      (* pointer comparison *)
+      | SBinop(p1, op, p2) ->
+         let p1' = expr builder p1 and p2' = expr builder p2 in
+          ( match op with
+          | A.Equal -> L.build_icmp L.Icmp.Eq
+          | A.Neq -> L.build_icmp L.Icmp.Ne
+          | A.Less -> L.build_icmp L.Icmp.Slt
+          | A.Leq -> L.build_icmp L.Icmp.Sle
+          | A.Greater -> L.build_icmp L.Icmp.Sgt
+          | A.Geq -> L.build_icmp L.Icmp.Sge )
+            p1' p2' "tmp" builder
+      (* subscript, reference, dereference *)
       (* Subscript *)
       | SSubscript (s, i) ->
           let e =
@@ -218,7 +229,7 @@ let translate (globals, functions) =
       | SDeref s -> L.build_load (expr builder s) "deref" builder
       (* Reference *)
       | SRefer s -> lookup s
-      (* need to add malloc and free *)
+      (* malloc and free *)
       | SCall ("malloc", [e]) ->
           L.build_call malloc_func [|expr builder e|] "malloc" builder
           (* L.build_array_malloc vpoint_t  (expr builder e) "malloc" builder *)
