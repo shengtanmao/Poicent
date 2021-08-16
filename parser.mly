@@ -9,7 +9,7 @@ open Ast
 %token <bool> BLIT
 %token <string> ID FLIT
 %token EOF
-%token AMPER INC DEC LB RB
+%token AMPER LB RB
 
 %start program
 %type <Ast.program> program
