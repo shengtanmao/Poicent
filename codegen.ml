@@ -120,8 +120,6 @@ let translate (globals, functions) =
     let vptr_cast e t =
         L.build_bitcast e t "vpcast" builder 
     in
-    let is_pointer p = match p with A.Pointer s -> true | _ -> false
-    in
     (* Construct code for an expression; return its value *)
     let rec expr builder ((_, e) : sexpr) =
       match e with
@@ -133,10 +131,10 @@ let translate (globals, functions) =
       | SId s -> L.build_load (lookup s) s builder
       (* need to add support for Id, Deref, and Subscript expr *)
       | SAssign (e1, e2) ->
-          let t1, s1 = e1 and t2, s2 = e2 and e2'' = expr builder e2 in
+          let t1, s1 = e1 and _, s2 = e2 and e2'' = expr builder e2 in
           let e2' =
             match s2 with
-            | SCall ("malloc", [e]) ->
+            | SCall ("malloc", [_]) ->
                 L.build_bitcast e2'' (ltype_of_typ t1) "vpcast" builder
             | _ -> e2''
           in
@@ -152,7 +150,7 @@ let translate (globals, functions) =
             | SDeref s ->
                 let e1' = expr builder s in
                 L.build_store e2' e1' builder
-            | _ -> raise (Failure "you failed")
+            | _ -> raise (Failure "error: failed to assign value")
           in
           e
       | SBinop (((A.Float, _) as e1), op, e2) ->
@@ -203,7 +201,7 @@ let translate (globals, functions) =
          let i' = match op with
          | A.Add -> expr builder i
          | A.Sub -> expr builder (A.Int, SUnop (A.Neg, i))
-         | _ -> raise (Failure "you failed")
+         | _ -> raise (Failure "error: invalid pointer manipulation")
          in
          L.build_in_bounds_gep s' (Array.of_list[i']) "tmp" builder
       (* pointer comparison *)
@@ -215,7 +213,8 @@ let translate (globals, functions) =
           | A.Less -> L.build_icmp L.Icmp.Slt
           | A.Leq -> L.build_icmp L.Icmp.Sle
           | A.Greater -> L.build_icmp L.Icmp.Sgt
-          | A.Geq -> L.build_icmp L.Icmp.Sge )
+          | A.Geq -> L.build_icmp L.Icmp.Sge
+          | _ -> raise (Failure "error: invalid pointer comparison"))
             p1' p2' "tmp" builder
       (* subscript, reference, dereference *)
       (* Subscript *)
@@ -234,10 +233,10 @@ let translate (globals, functions) =
           L.build_call malloc_func [|expr builder e|] "malloc" builder
           (* L.build_array_malloc vpoint_t  (expr builder e) "malloc" builder *)
         | SCall ("free", [e]) ->
-          let t, s = e in
+          let _, s = e in
           let n = match s with
           | SId name -> name
-          | _ -> raise (Failure "failed to free")
+          | _ -> raise (Failure "error: failed to free pointer")
           in
         L.build_call free_func [|vptr_cast (load_lkup n) vpoint_t|] "free" builder
       | SCall ("print", [e]) | SCall ("printb", [e]) ->
