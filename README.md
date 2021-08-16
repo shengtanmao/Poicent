@@ -1,14 +1,15 @@
 # Poicent
 microc with pointers
 
-run docker
-docker run --rm -it -v `pwd`:/home/microc -w=/home/microc columbiasedwards/plt
+## How to build
+### run docker
+`docker run --rm -it -v ``pwd``:/home/microc -w=/home/microc columbiasedwards/plt`
 
-ocamlbuild
-ocamlbuild -use-ocamlfind -pkgs llvm,llvm.analysis -cflags -w,+a-4 poicent.native
+### ocamlbuild in docker
+`ocamlbuild -use-ocamlfind -pkgs llvm,llvm.analysis -cflags -w,+a-4 poicent.native`
 
-run translate to llvm
-./poicent.native -l tests/test-subscript1.c
-
-clang translate to llvm
-clang -S -emit-llvm foo.c
+## How to run tests in docker
+Go to the folder pointer-tests and run the desired test with:
+`sh run.sh test-<name>`
+For example:
+`sh run.sh test-arith1`
