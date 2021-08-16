@@ -9,7 +9,7 @@ microc with pointers
 `ocamlbuild -use-ocamlfind -pkgs llvm,llvm.analysis -cflags -w,+a-4 poicent.native`
 
 ## How to run tests in docker
-Go to the folder pointer-tests and run the desired test with:
-`sh run.sh test-<name>`
-For example:
+Go to the folder pointer-tests and run the desired test with:  
+`sh run.sh test-<name>`  
+For example:  
 `sh run.sh test-arith1`
