@@ -58,12 +58,13 @@ let translate (globals, functions) =
     L.declare_function "printf" printf_t the_module
   in
   (* need functions for malloc and free *)
-  let malloc_t : L.lltype = L.function_type vpoint_t [|i32_t|] in
+  (* let malloc_t : L.lltype = L.function_type vpoint_t [|i32_t|] in
   let malloc_func : L.llvalue =
     L.declare_function "malloc" malloc_t the_module
   in
   let free_t : L.lltype = L.function_type i32_t [|vpoint_t|] in
   let free_func : L.llvalue = L.declare_function "free" free_t the_module in
+  *)
   let printbig_t : L.lltype = L.function_type i32_t [|i32_t|] in
   let printbig_func : L.llvalue =
     L.declare_function "printbig" printbig_t the_module
@@ -117,9 +118,10 @@ let translate (globals, functions) =
     let load_lkup n =
       L.build_load (lookup n) "load" builder
     in
-    let vptr_cast e t =
+    (* let vptr_cast e t =
         L.build_bitcast e t "vpcast" builder 
     in
+    *)
     (* Construct code for an expression; return its value *)
     let rec expr builder ((_, e) : sexpr) =
       match e with
@@ -230,15 +232,16 @@ let translate (globals, functions) =
       | SRefer s -> lookup s
       (* malloc and free *)
       | SCall ("malloc", [e]) ->
-          L.build_call malloc_func [|expr builder e|] "malloc" builder
-          (* L.build_array_malloc vpoint_t  (expr builder e) "malloc" builder *)
-        | SCall ("free", [e]) ->
-          let _, s = e in
-          let n = match s with
-          | SId name -> name
-          | _ -> raise (Failure "error: failed to free pointer")
-          in
-        L.build_call free_func [|vptr_cast (load_lkup n) vpoint_t|] "free" builder
+          (* L.build_call malloc_func [|expr builder e|] "malloc" builder *)
+          L.build_array_malloc vpoint_t  (expr builder e) "malloc" builder
+      | SCall ("free", [e]) ->
+        let _, s = e in
+        let n = match s with
+        | SId name -> name
+        | _ -> raise (Failure "error: failed to free pointer")
+        in
+        (* L.build_call free_func [|vptr_cast (load_lkup n) vpoint_t|] "free" builder *)
+        L.build_free (load_lkup n) builder
       | SCall ("print", [e]) | SCall ("printb", [e]) ->
           L.build_call printf_func
             [|int_format_str; expr builder e|]
