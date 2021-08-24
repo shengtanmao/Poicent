@@ -241,7 +241,7 @@ let translate (globals, functions) =
         | _ -> raise (Failure "error: failed to free pointer")
         in
         (* L.build_call free_func [|vptr_cast (load_lkup n) vpoint_t|] "free" builder *)
-        L.build_free (load_lkup n) builder
+        L.build_free (L.build_load (lookup n) "load" builder) builder
       | SCall ("print", [e]) | SCall ("printb", [e]) ->
           L.build_call printf_func
             [|int_format_str; expr builder e|]
