@@ -1,0 +1,16 @@
+int set_one(int *a)
+{
+    *a = 1;
+}
+
+int main()
+{
+    int *a;
+    a = malloc(4);
+    set_one(a);
+
+    print(*a);
+
+    free(a);
+    return 0;
+}

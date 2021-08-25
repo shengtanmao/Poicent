@@ -2,10 +2,8 @@ int main()
 {
     int *a;
     a = malloc(8);
-    a[0] = 1;
-    a[1] = 2;
-    print(a[0]);
-    print(a[1]);
+    a[1] = 2.1;
+    print(a[2]);
     free(a);
     return 0;
 }

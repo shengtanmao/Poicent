@@ -1,0 +1,13 @@
+int main()
+{
+    int *a;
+    a = malloc(12);
+    a[0] = 1;
+    a[1] = 2;
+
+    a = a + 1+4-3;
+    print(*a);
+
+    free(a);
+    return 0;
+}
