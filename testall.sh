@@ -33,7 +33,7 @@ globalerror=0
 keep=0
 
 Usage() {
-    echo "Usage: testall.sh [options] [.mc files]"
+    echo "Usage: testall.sh [options] [.pc files]"
     echo "-k    Keep intermediate files"
     echo "-h    Print this help"
     exit 1
@@ -82,8 +82,8 @@ RunFail() {
 Check() {
     error=0
     basename=`echo $1 | sed 's/.*\\///
-                             s/.mc//'`
-    reffile=`echo $1 | sed 's/.mc$//'`
+                             s/.pc//'`
+    reffile=`echo $1 | sed 's/.pc$//'`
     basedir="`echo $1 | sed 's/\/[^\/]*$//'`/."
 
     echo -n "$basename..."
@@ -117,8 +117,8 @@ Check() {
 CheckFail() {
     error=0
     basename=`echo $1 | sed 's/.*\\///
-                             s/.mc//'`
-    reffile=`echo $1 | sed 's/.mc$//'`
+                             s/.pc//'`
+    reffile=`echo $1 | sed 's/.pc$//'`
     basedir="`echo $1 | sed 's/\/[^\/]*$//'`/."
 
     echo -n "$basename..."
@@ -171,7 +171,7 @@ if [ $# -ge 1 ]
 then
     files=$@
 else
-    files="microc-tests/test-*.mc microc-tests/fail-*.mc"
+    files="tests/test-*.pc tests/fail-*.pc"
 fi
 
 for file in $files

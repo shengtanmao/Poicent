@@ -70,8 +70,8 @@ let check (globals, functions) =
        the given lvalue type *)
     let check_assign lvaluet rvaluet err =
         let typ = match lvaluet with
-        | Pointer Void -> if (is_pointer rvaluet) then rvaluet else raise (Failure "cannot cast a non-pointer to void pointer")
-        | Pointer p -> if rvaluet = (Pointer Void) || rvaluet = lvaluet then lvaluet else raise (Failure "cannot cast a non-pointer to a pointer")
+        | Pointer Void -> if (is_pointer rvaluet) then rvaluet else raise (Failure err)
+        | Pointer p -> if rvaluet = (Pointer Void) || rvaluet = lvaluet then lvaluet else raise (Failure err)
         | _ -> if lvaluet = rvaluet then lvaluet else raise (Failure err)
         in typ
     in
@@ -103,7 +103,7 @@ let check (globals, functions) =
       | Assign (e1, e2) as ex ->
           let t1, e1' = expr e1 and t2, e2' = expr e2 in
           let err =
-            "illegal assignment " ^ string_of_typ t1 ^ " = " ^ string_of_typ t1
+            "illegal assignment " ^ string_of_typ t1 ^ " = " ^ string_of_typ t2
             ^ " in " ^ string_of_expr ex
           and vt =
             match e1 with

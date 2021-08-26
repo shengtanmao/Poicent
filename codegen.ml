@@ -174,7 +174,7 @@ let translate (globals, functions) =
                    "internal error: semant should have rejected and/or on float")
           )
             e1' e2' "tmp" builder
-      | SBinop ((A.Int, _) as e1, op, e2) ->
+      | SBinop ((A.Int, _) as e1, op, e2) | SBinop((A.Bool, _) as e1, op, e2)->
           let e1' = expr builder e1 and e2' = expr builder e2 in
           ( match op with
           | A.Add -> L.build_add
