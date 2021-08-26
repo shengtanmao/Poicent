@@ -1,9 +1,0 @@
-int main()
-{
-    int *a;
-    a = malloc(8);
-    a[3] = 2;
-    print(a[3]);
-    free(a);
-    return 0;
-}

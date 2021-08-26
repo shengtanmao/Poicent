@@ -3,8 +3,8 @@ int main()
     int *a;
     int b;
     a = malloc(8);
-    a[1] = 2;
-    b = a[1]
+    a[1] = 11;
+    b = a[1];
     print(b);
     free(a);
     return 0;

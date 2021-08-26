@@ -1,13 +1,16 @@
 int main()
 {
     int *a;
+    int *start;
     a = malloc(12);
+    start = a;
+
     a[0] = 1;
     a[1] = 2;
 
-    a = a + 1+4-3;
+    a = a + 2+4-5;
     print(*a);
 
-    free(a);
+    free(start);
     return 0;
 }
