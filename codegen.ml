@@ -142,16 +142,16 @@ let translate (globals, functions) =
           in
           let e =
             match s1 with
-            | SId s -> L.build_store e2' (lookup s) builder
+            | SId s -> ignore(L.build_store e2' (lookup s) builder); e2'
             | SSubscript (s, i) ->
                 let e1' =
                   let s' = expr builder s and i' = expr builder i in
                   L.build_in_bounds_gep s' (Array.of_list [i']) "tmp" builder
                 in
-                L.build_store e2' e1' builder
+                ignore(L.build_store e2' e1' builder); e2'
             | SDeref s ->
                 let e1' = expr builder s in
-                L.build_store e2' e1' builder
+                ignore(L.build_store e2' e1' builder); e2'
             | _ -> raise (Failure "error: failed to assign value")
           in
           e
