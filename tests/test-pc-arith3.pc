@@ -1,0 +1,21 @@
+int main()
+{
+    int *a;
+    int *start;
+    int b;
+
+    a = malloc(12);
+    start = a;
+    b = 3;
+
+    a[0] = 1;
+    a[1] = 2;
+    a[2] = 3;
+
+    a = a + 5;
+    a = a - b;
+    print(*a);
+
+    free(start);
+    return 0;
+}

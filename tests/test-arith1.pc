@@ -1,10 +1,5 @@
 int main()
 {
-    int *a;
-    a = malloc(8);
-    a[0] = 1;
-    a[1] = 2;
-    print(*(a+1));
-    free(a);
-    return 0;
+  print(39 + 3);
+  return 0;
 }

@@ -3,7 +3,7 @@ microc with pointers
 
 ## How to build
 ### run docker
-``docker run --rm -it -v `pwd`:/home/microc -w=/home/microc columbiasedwards/plt``
+``docker run --rm -it -v `pwd`:/home/poicent -w=/home/poicent columbiasedwards/plt``
 
 ### ocamlbuild in docker
 `ocamlbuild -use-ocamlfind -pkgs llvm,llvm.analysis -cflags -w,+a-4 poicent.native`

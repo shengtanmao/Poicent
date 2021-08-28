@@ -1,16 +1,12 @@
-int set_one(int *a)
+int add(int a, int b)
 {
-    *a = 1;
+  return a + b;
 }
 
 int main()
 {
-    int *a;
-    a = malloc(4);
-    set_one(a);
-
-    print(*a);
-
-    free(a);
-    return 0;
+  int a;
+  a = add(39, 3);
+  print(a);
+  return 0;
 }

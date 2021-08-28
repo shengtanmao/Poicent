@@ -1,9 +1,11 @@
 int main()
 {
-    int **a;
-    int b;
-    b = 1;
-    a = &b;
-    print(*a);
-    return 0;
+  int i;
+  bool b;
+
+  i = 42;
+  i = 10;
+  b = true;
+  b = false;
+  i = false; /* Fail: assigning a bool to an integer */
 }

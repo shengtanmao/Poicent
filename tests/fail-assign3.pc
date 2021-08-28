@@ -1,9 +1,11 @@
+void myvoid()
+{
+  return;
+}
+
 int main()
 {
-    int *a;
-    a = malloc(8);
-    a[1] = 2.1;
-    print(a[2]);
-    free(a);
-    return 0;
+  int i;
+
+  i = myvoid(); /* Fail: assigning a void to an integer */
 }
