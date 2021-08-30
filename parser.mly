@@ -86,7 +86,7 @@ expr_opt:
 
 expr:
     LITERAL          { Literal($1)            }
-  | FLIT	     { Fliteral($1)           }
+  | FLIT	           { Fliteral($1)           }
   | BLIT             { BoolLit($1)            }
   | ID               { Id($1)                 }
   | expr PLUS   expr { Binop($1, Add,   $3)   }
@@ -103,10 +103,10 @@ expr:
   | expr OR     expr { Binop($1, Or,    $3)   }
   | MINUS expr %prec NOT { Unop(Neg, $2)      }
   | NOT expr         { Unop(Not, $2)          }
-  | TIMES expr %prec NOT { Deref $2 }
-  | AMPER ID { Refer $2}
-  | expr LB expr RB {Subscript($1,$3)}
-  | expr ASSIGN expr   { Assign($1, $3)         }
+  | TIMES expr %prec NOT { Deref $2           }
+  | AMPER ID         { Refer $2               }
+  | expr LB expr RB  { Subscript($1,$3)       }
+  | expr ASSIGN expr { Assign($1, $3)         }
   | ID LPAREN args_opt RPAREN { Call($1, $3)  }
   | LPAREN expr RPAREN { $2                   }
 

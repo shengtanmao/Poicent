@@ -41,8 +41,7 @@ let check (globals, functions) =
       ; (Pointer Void, "malloc", Int)
       ; (Void, "print", Int)
       ; (Void, "printb", Bool)
-      ; (Void, "printf", Float)
-      ; (Void, "printbig", Int) ]
+      ; (Void, "printf", Float) ]
   in
   (* Add function name to symbol table *)
   let add_func map fd =
@@ -66,7 +65,7 @@ let check (globals, functions) =
   let _ = find_func "main" in
   (* Ensure "main" is defined *)
   (* check if type is a pointer *)
-  let is_pointer p = match p with Pointer s -> true | _ -> false in
+  let is_pointer p = match p with Pointer _ -> true | _ -> false in
   let check_function func =
     (* Make sure no formals or locals are void or duplicates *)
     check_binds "formal" func.formals ;
@@ -78,7 +77,7 @@ let check (globals, functions) =
         match lvaluet with
         | Pointer Void ->
             if is_pointer rvaluet then rvaluet else raise (Failure err)
-        | Pointer p ->
+        | Pointer _ ->
             if rvaluet = Pointer Void || rvaluet = lvaluet then lvaluet
             else raise (Failure err)
         | _ -> if lvaluet = rvaluet then lvaluet else raise (Failure err)
@@ -109,7 +108,7 @@ let check (globals, functions) =
       | BoolLit l -> (Bool, SBoolLit l)
       | Noexpr -> (Void, SNoexpr)
       | Id s -> (type_of_identifier s, SId s)
-      (* can only assign Id expr, Deref expr, and Subscript expr *)
+      (* special handling for deref and subscript expr *)
       | Assign (e1, e2) as ex ->
           let t1, e1' = expr e1 and t2, e2' = expr e2 in
           let err =
@@ -149,7 +148,7 @@ let check (globals, functions) =
               when same && (t1 = Int || t1 = Float || is_pointer t1) ->
                 Bool
             | (And | Or) when same && t1 = Bool -> Bool
-            (* pointer arithmetic *)
+            (* pointer addition and subtraction *)
             | (Add | Sub) when is_pointer t1 && t2 = Int -> t1
             | _ ->
                 raise
@@ -178,7 +177,7 @@ let check (globals, functions) =
             in
             let args' = List.map2 check_call fd.formals args in
             (fd.typ, SCall (fname, args'))
-          (* subscript main expr must be a pointer and the subscript must be integer *)
+      (* subscript main expr must be a pointer and the subscript must be integer *)
       | Subscript (e, s) ->
           let te, e' = expr e and ts, s' = expr s in
           if ts != Int then raise (Failure "subscript expression not integral")

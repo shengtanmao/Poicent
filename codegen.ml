@@ -57,18 +57,6 @@ let translate (globals, functions) =
   let printf_func : L.llvalue =
     L.declare_function "printf" printf_t the_module
   in
-  (* need functions for malloc and free *)
-  (* let malloc_t : L.lltype = L.function_type vpoint_t [|i32_t|] in
-  let malloc_func : L.llvalue =
-    L.declare_function "malloc" malloc_t the_module
-  in
-  let free_t : L.lltype = L.function_type i32_t [|vpoint_t|] in
-  let free_func : L.llvalue = L.declare_function "free" free_t the_module in
-  *)
-  let printbig_t : L.lltype = L.function_type i32_t [|i32_t|] in
-  let printbig_func : L.llvalue =
-    L.declare_function "printbig" printbig_t the_module
-  in
   (* Define each function (arguments and return type) so we can
      call it even before we've created its body *)
   let function_decls : (L.llvalue * sfunc_decl) StringMap.t =
@@ -115,11 +103,6 @@ let translate (globals, functions) =
       try StringMap.find n local_vars with Not_found ->
         StringMap.find n global_vars
     in
-    let load_lkup n = L.build_load (lookup n) "load" builder in
-    (* let vptr_cast e t =
-        L.build_bitcast e t "vpcast" builder 
-    in
-    *)
     (* Construct code for an expression; return its value *)
     let rec expr builder ((_, e) : sexpr) =
       match e with
@@ -129,7 +112,7 @@ let translate (globals, functions) =
       | SNoexpr -> L.const_int i32_t 0
       (* need to allocate sizeof(type) to hold referenced var when declaring poitners *)
       | SId s -> L.build_load (lookup s) s builder
-      (* need to add support for Id, Deref, and Subscript expr *)
+      (* special handling for deref and subscript expr *)
       | SAssign (e1, e2) ->
           let t1, s1 = e1 and _, s2 = e2 and e2'' = expr builder e2 in
           let e2' =
@@ -200,7 +183,7 @@ let translate (globals, functions) =
           | A.Neg -> L.build_neg
           | A.Not -> L.build_not )
             e' "tmp" builder
-      (* pointer addition & subtraction *)
+      (* pointer addition and subtraction *)
       | SBinop (s, op, ((A.Int, _) as i)) ->
           let s' = expr builder s in
           let i' =
@@ -222,21 +205,15 @@ let translate (globals, functions) =
           | A.Geq -> L.build_icmp L.Icmp.Sge
           | _ -> raise (Failure "error: invalid pointer comparison") )
             p1' p2' "tmp" builder
-      (* subscript, reference, dereference *)
-      (* Subscript *)
       | SSubscript (s, i) ->
           let e =
             let s' = expr builder s and i' = expr builder i in
             L.build_in_bounds_gep s' (Array.of_list [i']) "gep" builder
           in
           L.build_load e "deref" builder
-      (* Dereference *)
       | SDeref s -> L.build_load (expr builder s) "deref" builder
-      (* Reference *)
       | SRefer s -> lookup s
-      (* malloc and free *)
       | SCall ("malloc", [e]) ->
-          (* L.build_call malloc_func [|expr builder e|] "malloc" builder *)
           L.build_array_malloc vpoint_t (expr builder e) "malloc" builder
       | SCall ("free", [e]) ->
           let _, s = e in
@@ -245,14 +222,11 @@ let translate (globals, functions) =
             | SId name -> name
             | _ -> raise (Failure "error: failed to free pointer")
           in
-          (* L.build_call free_func [|vptr_cast (load_lkup n) vpoint_t|] "free" builder *)
           L.build_free (L.build_load (lookup n) "load" builder) builder
       | SCall ("print", [e]) | SCall ("printb", [e]) ->
           L.build_call printf_func
             [|int_format_str; expr builder e|]
             "printf" builder
-      | SCall ("printbig", [e]) ->
-          L.build_call printbig_func [|expr builder e|] "printbig" builder
       | SCall ("printf", [e]) ->
           L.build_call printf_func
             [|float_format_str; expr builder e|]
