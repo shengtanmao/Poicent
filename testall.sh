@@ -17,10 +17,10 @@ LLC="llc"
 # Path to the C compiler
 CC="cc"
 
-# Path to the poicent compiler.  Usually "./microc.native"
+# Path to the poicent compiler.  Usually "./poicent.native"
 # Try "_build/poicent.native" if ocamlbuild was unable to create a symbolic link.
-MICROC="./poicent.native"
-#MICROC="_build/poicent.native"
+POICENT="./poicent.native"
+#POICENT="_build/poicent.native"
 
 # Set time limit for all operations
 ulimit -t 30
@@ -94,7 +94,7 @@ Check() {
     generatedfiles=""
 
     generatedfiles="$generatedfiles ${basename}.ll ${basename}.s ${basename}.exe ${basename}.out" &&
-    Run "$MICROC" "$1" ">" "${basename}.ll" &&
+    Run "$POICENT" "$1" ">" "${basename}.ll" &&
     Run "$LLC" "-relocation-model=pic" "${basename}.ll" ">" "${basename}.s" &&
     Run "$CC" "-o" "${basename}.exe" "${basename}.s" &&
     Run "./${basename}.exe" > "${basename}.out" &&
@@ -129,7 +129,7 @@ CheckFail() {
     generatedfiles=""
 
     generatedfiles="$generatedfiles ${basename}.err ${basename}.diff" &&
-    RunFail "$MICROC" "<" $1 "2>" "${basename}.err" ">>" $globallog &&
+    RunFail "$POICENT" "<" $1 "2>" "${basename}.err" ">>" $globallog &&
     Compare ${basename}.err ${reffile}.err ${basename}.diff
 
     # Report the status and clean up the generated files

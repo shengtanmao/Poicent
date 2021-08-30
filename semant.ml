@@ -1,4 +1,4 @@
-(* Semantic checking for the MicroC compiler *)
+(* Semantic checking for the Poicent compiler *)
 
 open Ast
 open Sast
