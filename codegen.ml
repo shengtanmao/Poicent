@@ -115,9 +115,7 @@ let translate (globals, functions) =
       try StringMap.find n local_vars with Not_found ->
         StringMap.find n global_vars
     in
-    let load_lkup n =
-      L.build_load (lookup n) "load" builder
-    in
+    let load_lkup n = L.build_load (lookup n) "load" builder in
     (* let vptr_cast e t =
         L.build_bitcast e t "vpcast" builder 
     in
@@ -142,16 +140,20 @@ let translate (globals, functions) =
           in
           let e =
             match s1 with
-            | SId s -> ignore(L.build_store e2' (lookup s) builder); e2'
+            | SId s ->
+                ignore (L.build_store e2' (lookup s) builder) ;
+                e2'
             | SSubscript (s, i) ->
                 let e1' =
                   let s' = expr builder s and i' = expr builder i in
                   L.build_in_bounds_gep s' (Array.of_list [i']) "tmp" builder
                 in
-                ignore(L.build_store e2' e1' builder); e2'
+                ignore (L.build_store e2' e1' builder) ;
+                e2'
             | SDeref s ->
                 let e1' = expr builder s in
-                ignore(L.build_store e2' e1' builder); e2'
+                ignore (L.build_store e2' e1' builder) ;
+                e2'
             | _ -> raise (Failure "error: failed to assign value")
           in
           e
@@ -174,7 +176,8 @@ let translate (globals, functions) =
                    "internal error: semant should have rejected and/or on float")
           )
             e1' e2' "tmp" builder
-      | SBinop ((A.Int, _) as e1, op, e2) | SBinop((A.Bool, _) as e1, op, e2)->
+      | SBinop (((A.Int, _) as e1), op, e2)
+       |SBinop (((A.Bool, _) as e1), op, e2) ->
           let e1' = expr builder e1 and e2' = expr builder e2 in
           ( match op with
           | A.Add -> L.build_add
@@ -198,17 +201,18 @@ let translate (globals, functions) =
           | A.Not -> L.build_not )
             e' "tmp" builder
       (* pointer addition & subtraction *)
-      | SBinop(s, op, ((A.Int, _) as i)) ->
-         let s' = expr builder s in
-         let i' = match op with
-         | A.Add -> expr builder i
-         | A.Sub -> expr builder (A.Int, SUnop (A.Neg, i))
-         | _ -> raise (Failure "error: invalid pointer manipulation")
-         in
-         L.build_in_bounds_gep s' (Array.of_list[i']) "tmp" builder
+      | SBinop (s, op, ((A.Int, _) as i)) ->
+          let s' = expr builder s in
+          let i' =
+            match op with
+            | A.Add -> expr builder i
+            | A.Sub -> expr builder (A.Int, SUnop (A.Neg, i))
+            | _ -> raise (Failure "error: invalid pointer manipulation")
+          in
+          L.build_in_bounds_gep s' (Array.of_list [i']) "tmp" builder
       (* pointer comparison *)
-      | SBinop(p1, op, p2) ->
-         let p1' = expr builder p1 and p2' = expr builder p2 in
+      | SBinop (p1, op, p2) ->
+          let p1' = expr builder p1 and p2' = expr builder p2 in
           ( match op with
           | A.Equal -> L.build_icmp L.Icmp.Eq
           | A.Neq -> L.build_icmp L.Icmp.Ne
@@ -216,7 +220,7 @@ let translate (globals, functions) =
           | A.Leq -> L.build_icmp L.Icmp.Sle
           | A.Greater -> L.build_icmp L.Icmp.Sgt
           | A.Geq -> L.build_icmp L.Icmp.Sge
-          | _ -> raise (Failure "error: invalid pointer comparison"))
+          | _ -> raise (Failure "error: invalid pointer comparison") )
             p1' p2' "tmp" builder
       (* subscript, reference, dereference *)
       (* Subscript *)
@@ -233,15 +237,16 @@ let translate (globals, functions) =
       (* malloc and free *)
       | SCall ("malloc", [e]) ->
           (* L.build_call malloc_func [|expr builder e|] "malloc" builder *)
-          L.build_array_malloc vpoint_t  (expr builder e) "malloc" builder
+          L.build_array_malloc vpoint_t (expr builder e) "malloc" builder
       | SCall ("free", [e]) ->
-        let _, s = e in
-        let n = match s with
-        | SId name -> name
-        | _ -> raise (Failure "error: failed to free pointer")
-        in
-        (* L.build_call free_func [|vptr_cast (load_lkup n) vpoint_t|] "free" builder *)
-        L.build_free (L.build_load (lookup n) "load" builder) builder
+          let _, s = e in
+          let n =
+            match s with
+            | SId name -> name
+            | _ -> raise (Failure "error: failed to free pointer")
+          in
+          (* L.build_call free_func [|vptr_cast (load_lkup n) vpoint_t|] "free" builder *)
+          L.build_free (L.build_load (lookup n) "load" builder) builder
       | SCall ("print", [e]) | SCall ("printb", [e]) ->
           L.build_call printf_func
             [|int_format_str; expr builder e|]

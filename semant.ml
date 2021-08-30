@@ -33,11 +33,16 @@ let check (globals, functions) =
   let built_in_decls =
     let add_bind map (typ, name, ty) =
       StringMap.add name
-        {typ= typ; fname= name; formals= [(ty, "x")]; locals= []; body= []}
+        {typ; fname= name; formals= [(ty, "x")]; locals= []; body= []}
         map
     in
     List.fold_left add_bind StringMap.empty
-      [(Void, "free", Pointer Void); (Pointer Void, "malloc", Int); (Void, "print", Int); (Void, "printb", Bool); (Void, "printf", Float); (Void, "printbig", Int)]
+      [ (Void, "free", Pointer Void)
+      ; (Pointer Void, "malloc", Int)
+      ; (Void, "print", Int)
+      ; (Void, "printb", Bool)
+      ; (Void, "printf", Float)
+      ; (Void, "printbig", Int) ]
   in
   (* Add function name to symbol table *)
   let add_func map fd =
@@ -60,8 +65,8 @@ let check (globals, functions) =
   in
   let _ = find_func "main" in
   (* Ensure "main" is defined *)
-    (* check if type is a pointer *)
-    let is_pointer p = match p with Pointer s -> true | _ -> false in
+  (* check if type is a pointer *)
+  let is_pointer p = match p with Pointer s -> true | _ -> false in
   let check_function func =
     (* Make sure no formals or locals are void or duplicates *)
     check_binds "formal" func.formals ;
@@ -69,11 +74,16 @@ let check (globals, functions) =
     (* Raise an exception if the given rvalue type cannot be assigned to
        the given lvalue type *)
     let check_assign lvaluet rvaluet err =
-        let typ = match lvaluet with
-        | Pointer Void -> if (is_pointer rvaluet) then rvaluet else raise (Failure err)
-        | Pointer p -> if rvaluet = (Pointer Void) || rvaluet = lvaluet then lvaluet else raise (Failure err)
+      let typ =
+        match lvaluet with
+        | Pointer Void ->
+            if is_pointer rvaluet then rvaluet else raise (Failure err)
+        | Pointer p ->
+            if rvaluet = Pointer Void || rvaluet = lvaluet then lvaluet
+            else raise (Failure err)
         | _ -> if lvaluet = rvaluet then lvaluet else raise (Failure err)
-        in typ
+      in
+      typ
     in
     (* Build local symbol table of variables for this function *)
     let symbols =
@@ -140,8 +150,7 @@ let check (globals, functions) =
                 Bool
             | (And | Or) when same && t1 = Bool -> Bool
             (* pointer arithmetic *)
-            | (Add | Sub)
-              when (is_pointer t1 && t2 = Int) -> t1
+            | (Add | Sub) when is_pointer t1 && t2 = Int -> t1
             | _ ->
                 raise
                   (Failure
