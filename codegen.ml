@@ -112,7 +112,7 @@ let translate (globals, functions) =
       | SNoexpr -> L.const_int i32_t 0
       (* need to allocate sizeof(type) to hold referenced var when declaring poitners *)
       | SId s -> L.build_load (lookup s) s builder
-      (* special handling for deref and subscript expr *)
+      (* special handling for deref expr, subscript expr, and malloc *)
       | SAssign (e1, e2) ->
           let t1, s1 = e1 and _, s2 = e2 and e2'' = expr builder e2 in
           let e2' =

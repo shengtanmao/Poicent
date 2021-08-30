@@ -72,6 +72,7 @@ let check (globals, functions) =
     check_binds "local" func.locals ;
     (* Raise an exception if the given rvalue type cannot be assigned to
        the given lvalue type *)
+    (* special handling for pointers *)
     let check_assign lvaluet rvaluet err =
       let typ =
         match lvaluet with
@@ -108,7 +109,6 @@ let check (globals, functions) =
       | BoolLit l -> (Bool, SBoolLit l)
       | Noexpr -> (Void, SNoexpr)
       | Id s -> (type_of_identifier s, SId s)
-      (* special handling for deref and subscript expr *)
       | Assign (e1, e2) as ex ->
           let t1, e1' = expr e1 and t2, e2' = expr e2 in
           let err =
