@@ -1,0 +1,24 @@
+int main()
+{
+    int **a;
+    int i;
+    int j;
+
+    a = malloc(5*8);
+
+    for (i=0; i<5; i=i+1) {
+        a[i] = malloc(5*4);
+        for (j=0; j<5; j=j+1) {
+            a[i][j] = (i+1) * (j+1);
+        }
+    }
+
+    for (i=0; i<5; i=i+1) {
+        for (j=0; j<5; j=j+1) {
+            print(a[i][j]);
+        }
+        free(a[i]);
+    }
+    free(a);
+    return 0;
+}

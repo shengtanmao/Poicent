@@ -217,13 +217,7 @@ let translate (globals, functions) =
       | SCall ("malloc", [e]) ->
           L.build_array_malloc vpoint_t (expr builder e) "malloc" builder
       | SCall ("free", [e]) ->
-          let _, s = e in
-          let n =
-            match s with
-            | SId name -> name
-            | _ -> raise (Failure "error: failed to free pointer")
-          in
-          L.build_free (L.build_load (lookup n) "load" builder) builder
+          L.build_free (expr builder e) builder
       | SCall ("print", [e]) | SCall ("printb", [e]) ->
           L.build_call printf_func
             [|int_format_str; expr builder e|]
