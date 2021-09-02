@@ -1,0 +1,16 @@
+int main()
+{
+    int *a;
+    int *a0;
+
+    a = malloc(5*4);
+    a0 = a;
+    
+    a[4] = 4115;
+    a = a + 1;
+    
+    print(a[3]);
+    
+    free(a0);
+    return 0;
+}

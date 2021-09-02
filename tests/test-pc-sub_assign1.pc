@@ -2,9 +2,8 @@ void test_int()
 {
     int *a;
     a = malloc(2*4);
-    a[0] = 1;
     a[1] = 2;
-    print(*(a+1));
+    print(a[1]);
     free(a);
 }
 
@@ -12,9 +11,8 @@ void test_float()
 {
     float *a;
     a = malloc(2*8);
-    a[0] = 1.1;
     a[1] = 2.2;
-    printf(*(a+1));
+    printf(a[1]);
     free(a);
 }
 
@@ -22,9 +20,8 @@ void test_bool()
 {
     bool *a;
     a = malloc(2*1);
-    a[0] = true;
-    a[1] = false;
-    printb(*(a+1));
+    a[1] = true;
+    printb(a[1]);
     free(a);
 }
 

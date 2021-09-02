@@ -36,7 +36,8 @@ let translate (globals, functions) =
     | A.Bool -> i1_t
     | A.Float -> float_t
     | A.Void -> void_t
-    | A.Pointer p -> L.pointer_type (ltype_of_typ p)
+    | A.Pointer p ->
+        if p == A.Void then vpoint_t else L.pointer_type (ltype_of_typ p)
   in
   (* Create a map of global variables after creating each *)
   let global_vars : L.llvalue StringMap.t =

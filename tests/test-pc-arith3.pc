@@ -1,11 +1,11 @@
 int main()
 {
     int *a;
-    int *start;
+    int *a0;
     int b;
 
     a = malloc(12);
-    start = a;
+    a0 = a;
     b = 3;
 
     a[0] = 1;
@@ -16,6 +16,6 @@ int main()
     a = a - b;
     print(*a);
 
-    free(start);
+    free(a0);
     return 0;
 }

@@ -1,0 +1,1 @@
+Fatal error: exception Failure("illegal binary operator void* + float in a + 1.1")

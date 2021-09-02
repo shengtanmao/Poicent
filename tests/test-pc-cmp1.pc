@@ -1,7 +1,7 @@
 int main()
 {
-    int *a;
-    int *b;
+    void *a;
+    void *b;
     b = a + 1;
     if (a < b)
         print(1);
