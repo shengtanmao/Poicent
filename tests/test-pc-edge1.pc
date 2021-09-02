@@ -7,9 +7,9 @@ int main()
     a0 = a;
     
     a[4] = 4115;
-    a = a + 1;
+    a = a - 1;
     
-    print(a[3]);
+    print(a[5]);
     
     free(a0);
     return 0;
