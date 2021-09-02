@@ -1,14 +1,14 @@
 int main()
 {
     void *a;
-    void *a_0;
+    void *a0;
 
     a = malloc(1);
-    a_0 = a;
+    a0 = a;
 
     a = a + 13;
     a = a - 31;
 
-    free(a_0);
+    free(a0);
     return 0;
 }
