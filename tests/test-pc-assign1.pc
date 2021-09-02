@@ -1,0 +1,31 @@
+void test_int()
+{
+    int *a;
+    a = malloc(4);
+    *a = 2;
+    print(*a);
+}
+
+void test_float()
+{
+    float *a;
+    a = malloc(8);
+    *a = 3.3;
+    printf(*a);
+}
+
+void test_bool()
+{
+    bool *a;
+    a = malloc(1);
+    *a = true;
+    printb(*a);
+}
+
+int main()
+{
+    test_int();
+    test_float();
+    test_bool();
+    return 0;
+}
