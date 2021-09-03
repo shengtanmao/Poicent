@@ -49,4 +49,6 @@ int main()
     fpp = float_pp();
     bp = bool_p();
     bpp = bool_pp();
+
+    return 0;
 }
