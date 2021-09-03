@@ -1,0 +1,21 @@
+int main()
+{
+    int *a;
+    int *a0;
+    int i;
+
+    a = malloc(5*4);
+    a0 = a;
+    for (i=1; i<=5; i=i+1) {
+        *a = i;
+        a = a + 1;
+    }
+    
+    while (a>a0) {
+        a = a - 1;
+        print(*a);
+    }
+
+    free(a0);
+    return 0;
+}
