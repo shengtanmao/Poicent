@@ -1,16 +1,52 @@
-int set_one(int *a)
+int *int_p()
 {
-    *a = 1;
+    int *a;
+    return a;
+}
+
+int **int_pp()
+{
+    int **a;
+    return a;
+}
+
+float *float_p()
+{
+    float *a;
+    return a;
+}
+
+float **float_pp()
+{
+    float **a;
+    return a;
+}
+
+bool *bool_p()
+{
+    bool *a;
+    return a;
+}
+
+bool **bool_pp()
+{
+    bool **a;
+    return a;
 }
 
 int main()
 {
-    int *a;
-    a = malloc(4);
-    set_one(a);
+    int *ip;
+    int **ipp;
+    float *fp;
+    float **fpp;
+    bool *bp;
+    bool **bpp;
 
-    print(*a);
-
-    free(a);
-    return 0;
+    ip = int_p();
+    ipp = int_pp();
+    fp = float_p();
+    fpp = float_pp();
+    bp = bool_p();
+    bpp = bool_pp();
 }
